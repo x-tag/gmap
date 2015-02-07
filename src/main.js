@@ -25,7 +25,7 @@
     });
     if (libraries.indexOf('places') > -1) {
       node.xtag.places = new maps.places.PlacesService(map);
-      node.xtag.autocomplete = new maps.places.AutocompleteService();  
+      node.xtag.autocomplete = new maps.places.AutocompleteService();
     }
     node.xtag.directions = {
       service: new maps.DirectionsService(),
@@ -83,8 +83,8 @@
       }
     }, 
     methods: {
-      getPredictions: function(obj){
-        this.xtag.autocomplete.getQueryPredictions(obj, function(predictions, status) {
+      getPlaces: function(obj){
+        this.xtag.autocomplete.getPlacePredictions(obj, function(predictions, status) {
           if (status != maps.places.PlacesServiceStatus.OK) {
             console.error(status);
             obj.onError(status);
