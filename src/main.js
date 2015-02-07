@@ -84,7 +84,7 @@
     }, 
     methods: {
       getPredictions: function(obj){
-        node.xtag.autocomplete.getQueryPredictions(obj, function(predictions, status) {
+        this.xtag.autocomplete.getQueryPredictions(obj, function(predictions, status) {
           if (status != maps.places.PlacesServiceStatus.OK) {
             console.error(status);
             obj.onError(status);
@@ -97,7 +97,7 @@
         request = request || {
           placeId: 'ChIJN1t_tDeuEmsRUsoyG83frY4'
         };  
-        node.xtag.places.getDetails(request, fn || function(place, status) {
+        this.xtag.places.getDetails(request, fn || function(place, status) {
           if (status == maps.places.PlacesServiceStatus.OK) {
             createMarker(place);
           }
