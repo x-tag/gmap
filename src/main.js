@@ -102,14 +102,14 @@
             createMarker(place);
           }
         });
+      },
+      addMarker: function(coords, title){
+        return new maps.Marker({
+          position: new maps.LatLng(coords[0], coords[1]),
+          map: this.xtag.map,
+          title: title 
+        });
       }
-    },
-    addMarker: function(coords, title){
-      return new maps.Marker({
-        position: new maps.LatLng(coords[0], coords[1]),
-        map: this.xtag.map,
-        title: title 
-      });
     }
   });
   
