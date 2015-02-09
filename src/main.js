@@ -109,7 +109,6 @@
         });
       },
       getDirections: function(obj){
-        console.log(obj.waypoints);
         var node = this,
             request = {
               origin: obj.waypoints.shift().location,
