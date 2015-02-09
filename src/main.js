@@ -21,7 +21,7 @@
     var map = node.xtag.map = new maps.Map(node, {
       zoom: node.zoom,
       center: { lat: node.lat, lng: node.lng  },
-      disableDefaultUI: !node.defaultUI
+      disableDefaultUI: !node.defaultUI,
     });
     if (libraries.indexOf('places') > -1) {
       node.xtag.places = new maps.places.PlacesService(map);
@@ -32,6 +32,7 @@
       renderer: new maps.DirectionsRenderer()
     }
     node.xtag.directions.renderer.setMap(map);
+    node.xtag.ready = true;
   };
   
   HTMLXGmapElement = xtag.register('x-gmap', {
@@ -78,19 +79,23 @@
           return this.getAttribute('zoom') || 11;
         },
         set: function(num){
-          if (this.xtag.map) this.xtag.map.setZoom(num);
+          if (node.xtag.ready) this.xtag.map.setZoom(num);
         }
       }
     }, 
     methods: {
+      resize: function(){
+        maps.event.trigger(this.xtag.map, 'resize');
+      },
       getPlaces: function(obj){
-        this.xtag.autocomplete.getPlacePredictions(obj, function(predictions, status) {
+        this.xtag.autocomplete.getPlacePredictions(obj, function(response, status) {
           if (status != maps.places.PlacesServiceStatus.OK) {
             console.error(status);
-            obj.onError(status);
-            return;
+            if (obj.onError) obj.onError(status);
           }
-          obj.onSuccess(predictions, status);
+          else {
+            if (obj.onSuccess) obj.onSuccess(response, status);
+          }
         });
       },
       getDetails: function(request, fn){
@@ -100,6 +105,27 @@
         this.xtag.places.getDetails(request, fn || function(place, status) {
           if (status == maps.places.PlacesServiceStatus.OK) {
             createMarker(place);
+          }
+        });
+      },
+      getDirections: function(obj){
+        console.log(obj.waypoints);
+        var node = this,
+            request = {
+              origin: obj.waypoints.shift().location,
+              destination: obj.waypoints.pop().location,
+              waypoints: obj.waypoints,
+              optimizeWaypoints: !!obj.optimize,
+              travelMode: google.maps.TravelMode[(obj.mode || 'DRIVING').toUpperCase()]
+            }
+        this.xtag.directions.service.route(request, function(response, status) {
+          if (status != maps.DirectionsStatus.OK) {
+            console.error(status);
+            if (obj.onError) obj.onError(status);
+          }
+          else {
+            if (obj.display) node.xtag.directions.renderer.setDirections(response);
+            if (obj.onSuccess) obj.onSuccess(response, status);
           }
         });
       },
