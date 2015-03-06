@@ -18,19 +18,28 @@
   };
   
   function initialize(node){
+    node.xtag.overlays = {
+      markers: [],
+      polylines: []
+    };
     var map = node.xtag.map = new maps.Map(node, {
       zoom: node.zoom,
       center: { lat: node.lat, lng: node.lng  },
       disableDefaultUI: !node.defaultUI,
     });
+    map._node = node;
     if (libraries.indexOf('places') > -1) {
       node.xtag.places = new maps.places.PlacesService(map);
       node.xtag.autocomplete = new maps.places.AutocompleteService();
     }
     node.xtag.directions = {
       service: new maps.DirectionsService(),
-      renderer: new maps.DirectionsRenderer()
-    }
+      renderer: new maps.DirectionsRenderer({
+        markerOptions: {
+          icon: node.markerIcon || null
+        }
+      })
+    };
     node.xtag.directions.renderer.setMap(map);
     node.xtag.ready = true;
   };
@@ -43,11 +52,17 @@
       }
     }, 
     events: { 
-    
+      
     },
     accessors: {
       defaultUI: {
         attribute: { name: 'default-ui', boolean: true }
+      },
+      markerIcon: {
+        attribute: {}
+      },
+      polylineColor: {
+        attribute: {}
       },
       lat: {
         attribute: {
@@ -69,6 +84,11 @@
           return this.getAttribute('lng') || -122.024459;
         }
       },
+      overlays: {
+        get: function(){
+          return this.xtag.overlays;
+        }
+      },
       zoom: {
         attribute: {
           validate: function(coord){
@@ -88,10 +108,10 @@
         maps.event.trigger(this.xtag.map, 'resize');
       },
       getPlaces: function(obj){
-        this.xtag.autocomplete.getPlacePredictions(obj, function(response, status) {
+        this.xtag.places.textSearch(obj, function(response, status) {
           if (status != maps.places.PlacesServiceStatus.OK) {
             console.error(status);
-            if (obj.onError) obj.onError(status);
+            if (obj.onError) obj.onError(response, status);
           }
           else {
             if (obj.onSuccess) obj.onSuccess(response, status);
@@ -120,19 +140,14 @@
         this.xtag.directions.service.route(request, function(response, status) {
           if (status != maps.DirectionsStatus.OK) {
             console.error(status);
-            if (obj.onError) obj.onError(status);
+            if (obj.onError) obj.onError(response, status);
           }
           else {
-            if (obj.display) node.xtag.directions.renderer.setDirections(response);
             if (obj.onSuccess) obj.onSuccess(response, status);
+            if (obj.display) {
+              node.xtag.directions.renderer.setDirections(response);
+            }
           }
-        });
-      },
-      addMarker: function(coords, title){
-        return new maps.Marker({
-          position: new maps.LatLng(coords[0], coords[1]),
-          map: this.xtag.map,
-          title: title 
         });
       }
     }
@@ -140,8 +155,27 @@
   
   var maps;
   var loaded = false;
+  
+  function removeOverlay(method, item){
+    var items = item._node.xtag.overlays[method];
+    items.splice(items.indexOf(item), 1);
+  }
+  
   HTMLXGmapElement.initializeMaps = function(){
     maps = google.maps;
+    ['Marker', 'Polyline'].forEach(function(method){
+      var _method = method.toLowerCase() + 's';
+      var setMap = maps[method].prototype.setMap;
+      maps[method].prototype.setMap = function(map){
+        if (map && map._node && !~map._node.xtag.overlays[_method].indexOf(this)) {
+          if (this._node) removeOverlay(_method, this);
+          this._node = map._node;
+          map._node.xtag.overlays[_method].push(this);
+        }
+        else if (!map && this._node) removeOverlay(_method, this);
+        return setMap.apply(this, arguments);
+      };
+    });
     xtag.query(document, 'x-gmap').forEach(initialize);
     loaded = true;
     loading = false;
