@@ -47,12 +47,8 @@
   HTMLXGmapElement = xtag.register('x-gmap', {
     lifecycle: {
       created: function() {
-        if (!loaded && !loading) createScript();
-        else initialize(this);
+        loaded ? initialize(this) : !loading ? createScript() : null;
       }
-    }, 
-    events: { 
-      
     },
     accessors: {
       defaultUI: {
