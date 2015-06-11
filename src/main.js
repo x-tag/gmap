@@ -42,6 +42,7 @@
     };
     node.xtag.directions.renderer.setMap(map);
     node.xtag.ready = true;
+    xtag.fireEvent(node, 'gmapready');
   };
   
   HTMLXGmapElement = xtag.register('x-gmap', {
@@ -176,7 +177,7 @@
     loaded = true;
     loading = false;
     HTMLXGmapElement.ready = true;
-    xtag.fireEvent(document, 'gmapready');
+    xtag.fireEvent(document, 'gmapsloaded');
   }
 
 })();
