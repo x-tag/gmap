@@ -159,6 +159,7 @@
   }
   
   HTMLXGmapElement.initializeMaps = function(){
+    xtag.fireEvent(document, 'gmapsapiloaded');
     maps = google.maps;
     ['Marker', 'Polyline'].forEach(function(method){
       var _method = method.toLowerCase() + 's';
@@ -177,7 +178,7 @@
     loaded = true;
     loading = false;
     HTMLXGmapElement.ready = true;
-    xtag.fireEvent(document, 'gmapsloaded');
+    xtag.fireEvent(document, 'gmapsready');
   }
 
 })();

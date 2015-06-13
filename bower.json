@@ -1,7 +1,7 @@
 {
   "name": "x-tag-gmap",
   "description": "Wrapping Google Maps in a custom element",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "keywords": [
     "web-components",
     "x-tag"
