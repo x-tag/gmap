@@ -1,5 +1,5 @@
 (function(){
-  
+
   var libraries = '';
   var loading = false;
   function createScript(){
@@ -16,7 +16,7 @@
     script.src = 'https://maps.googleapis.com/maps/api/js?callback=HTMLXGmapElement.initializeMaps' + params;
     document.body.appendChild(script);
   };
-  
+
   function initialize(node){
     node.xtag.overlays = {
       markers: [],
@@ -44,7 +44,7 @@
     node.xtag.ready = true;
     xtag.fireEvent(node, 'gmapready');
   };
-  
+
   HTMLXGmapElement = xtag.register('x-gmap', {
     lifecycle: {
       created: function() {
@@ -99,7 +99,7 @@
           if (node.xtag.ready) this.xtag.map.setZoom(num);
         }
       }
-    }, 
+    },
     methods: {
       resize: function(){
         maps.event.trigger(this.xtag.map, 'resize');
@@ -118,7 +118,7 @@
       getDetails: function(request, fn){
         request = request || {
           placeId: 'ChIJN1t_tDeuEmsRUsoyG83frY4'
-        };  
+        };
         this.xtag.places.getDetails(request, fn || function(place, status) {
           if (status == maps.places.PlacesServiceStatus.OK) {
             createMarker(place);
@@ -127,9 +127,10 @@
       },
       getDirections: function(obj){
         var node = this,
+            firstPoint = obj.waypoints.shift(),
             request = {
-              origin: obj.waypoints.shift().location,
-              destination: obj.waypoints.pop().location,
+              origin: firstPoint.location,
+              destination: obj.waypoints.length ? obj.waypoints.pop().location : firstPoint.location,
               waypoints: obj.waypoints,
               optimizeWaypoints: !!obj.optimize,
               travelMode: google.maps.TravelMode[(obj.mode || 'DRIVING').toUpperCase()]
@@ -149,15 +150,15 @@
       }
     }
   });
-  
+
   var maps;
   var loaded = false;
-  
+
   function removeOverlay(method, item){
     var items = item._node.xtag.overlays[method];
     items.splice(items.indexOf(item), 1);
   }
-  
+
   HTMLXGmapElement.initializeMaps = function(){
     xtag.fireEvent(document, 'gmapsapiloaded');
     maps = google.maps;
