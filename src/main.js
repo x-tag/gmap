@@ -20,7 +20,9 @@
   function initialize(node){
     node.xtag.overlays = {
       markers: [],
-      polylines: []
+      polylines: [],
+      infowindows: [],
+      overlayviews: []
     };
     var map = node.xtag.map = new maps.Map(node, {
       zoom: node.zoom,
@@ -68,7 +70,7 @@
           }
         },
         get: function(){
-          return this.getAttribute('lat') || 36.974777;
+          return Number(this.getAttribute('lat')) || 36.974777;
         }
       },
       lng: {
@@ -78,7 +80,7 @@
           }
         },
         get: function(){
-          return this.getAttribute('lng') || -122.024459;
+          return Number(this.getAttribute('lng')) || -122.024459;
         }
       },
       overlays: {
@@ -93,7 +95,7 @@
           }
         },
         get: function(){
-          return this.getAttribute('zoom') || 11;
+          return Number(this.getAttribute('zoom')) || 11;
         },
         set: function(num){
           if (node.xtag.ready) this.xtag.map.setZoom(num);
@@ -104,15 +106,19 @@
       resize: function(){
         maps.event.trigger(this.xtag.map, 'resize');
       },
+      clearOverlays: function(){
+        var overlays = this.xtag.overlays;
+        for (var z in overlays) overlays[z].slice(0).forEach(function(overlay){
+          overlay.setMap(null);
+        });
+      },
       getPlaces: function(obj){
         this.xtag.places.textSearch(obj, function(response, status) {
           if (status != maps.places.PlacesServiceStatus.OK) {
             console.error(status);
             if (obj.onError) obj.onError(response, status);
           }
-          else {
-            if (obj.onSuccess) obj.onSuccess(response, status);
-          }
+          else if (obj.onSuccess) obj.onSuccess(response, status);
         });
       },
       getDetails: function(request, fn){
@@ -137,7 +143,6 @@
             }
         this.xtag.directions.service.route(request, function(response, status) {
           if (status != maps.DirectionsStatus.OK) {
-            console.error(status);
             if (obj.onError) obj.onError(response, status);
           }
           else {
@@ -154,25 +159,27 @@
   var maps;
   var loaded = false;
 
-  function removeOverlay(method, item){
-    var items = item._node.xtag.overlays[method];
+  function removeOverlay(type, item){
+    var items = item._node.xtag.overlays[type];
     items.splice(items.indexOf(item), 1);
   }
 
   HTMLXGmapElement.initializeMaps = function(){
     xtag.fireEvent(document, 'gmapsapiloaded');
     maps = google.maps;
-    ['Marker', 'Polyline'].forEach(function(method){
-      var _method = method.toLowerCase() + 's';
-      var setMap = maps[method].prototype.setMap;
-      maps[method].prototype.setMap = function(map){
-        if (map && map._node && !~map._node.xtag.overlays[_method].indexOf(this)) {
-          if (this._node) removeOverlay(_method, this);
+    ['OverlayView', 'Marker', 'Polyline', 'InfoWindow'].forEach(function(klass){
+      var type = klass.toLowerCase() + 's';
+      var proto = maps[klass].prototype;
+      var name = proto.open ? 'open' : 'setMap';
+      var method = proto[name];
+      proto[name] = function(map){
+        if (map && map._node && !~map._node.xtag.overlays[type].indexOf(this)) {
+          if (this._node) removeOverlay(type, this);
           this._node = map._node;
-          map._node.xtag.overlays[_method].push(this);
+          map._node.xtag.overlays[type].push(this);
         }
-        else if (!map && this._node) removeOverlay(_method, this);
-        return setMap.apply(this, arguments);
+        else if (!map && this._node) removeOverlay(type, this);
+        return method.apply(this, arguments);
       };
     });
     xtag.query(document, 'x-gmap').forEach(initialize);
