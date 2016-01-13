@@ -26,7 +26,7 @@
     };
     var map = node.xtag.map = new maps.Map(node, {
       zoom: node.zoom,
-      center: node.center,
+      center: getLatLng(node),
       disableDefaultUI: !node.defaultUI,
     });
     map.addListener('idle', function(){
@@ -51,6 +51,14 @@
     xtag.fireEvent(node, 'gmapready');
   };
 
+  function getLatLng(node){
+    var split = node.center.split(coordSplit);
+    return {
+      lat: Number(split[0]),
+      lng: Number(split[1])
+    }
+  }
+
   var coordSplit = /\s*,\s*/;
 
   HTMLXGmapElement = xtag.register('x-gmap', {
@@ -73,20 +81,8 @@
         attribute: {
           def: '36.974777, -122.024459'
         },
-        get: function(){
-          return this.xtag.centerObj;
-        },
         set: function(val){
-          var split = val.split(coordSplit);
-          var centerString = split.join();
-          if (centerString != this.xtag.centerString) {
-            this.xtag.centerString = centerString;
-            this.xtag.centerObj = {
-              lat: Number(split[0]),
-              lng: Number(split[1])
-            };
-            if (this.xtag.ready) this.xtag.map.setCenter(this.xtag.centerObj);
-          }
+          if (this.xtag.ready) this.xtag.map.setCenter(getLatLng(this));
         }
       },
       overlays: {
@@ -104,7 +100,7 @@
           return this.getAttribute('zoom') || 11;
         },
         set: function(num){
-          if (node.xtag.ready) this.xtag.map.setZoom(num);
+          if (this.xtag.ready) this.xtag.map.setZoom(num);
         }
       }
     },
@@ -194,44 +190,5 @@
     HTMLXGmapElement.ready = true;
     xtag.fireEvent(document, 'gmapsready');
   }
-
-})();
-
-(function(){
-
-  xtag.mixins.input = {
-    lifecycle: {
-      created: function(){
-        if (!this.xtag.input) this.xtag.input = this.querySelector('input');
-      }
-    },
-    methods: {
-      isValid: function(){
-        return this.xtag.validationRegex ? this.xtag.validationRegex.test(this.value) : true;
-      }
-    },
-    accessors: {
-      name: {
-        attribute: { property: 'input' }
-      },
-      disabled: {
-        attribute: { boolean: true, property: 'input' }
-      },
-      value: {
-        get: function(){
-          return this.xtag.input.value;
-        },
-        set: function(value){
-          this.xtag.input.value = value;
-        }
-      },
-      validate: {
-        attribute: {},
-        set: function(value){
-          this.xtag.validationRegex = new RegExp(value);
-        }
-      }
-    }
-  };
 
 })();
