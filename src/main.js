@@ -26,7 +26,7 @@
     };
     var map = node.xtag.map = new maps.Map(node, {
       zoom: node.zoom,
-      center: { lat: node.lat, lng: node.lng  },
+      center: node.center,
       disableDefaultUI: !node.defaultUI,
     });
     map._node = node;
@@ -47,6 +47,8 @@
     xtag.fireEvent(node, 'gmapready');
   };
 
+  var coordSplit = /\s*,\s*/;
+
   HTMLXGmapElement = xtag.register('x-gmap', {
     lifecycle: {
       created: function() {
@@ -63,24 +65,24 @@
       polylineColor: {
         attribute: {}
       },
-      lat: {
+      center: {
         attribute: {
-          validate: function(coord){
-            return 1 * coord || -36.974777
-          }
+          def: '36.974777, -122.024459'
         },
         get: function(){
-          return Number(this.getAttribute('lat')) || 36.974777;
-        }
-      },
-      lng: {
-        attribute: {
-          validate: function(coord){
-            return 1 * coord || -122.024459
-          }
+          return this.xtag.centerObj;
         },
-        get: function(){
-          return Number(this.getAttribute('lng')) || -122.024459;
+        set: function(val){
+          var center = val.split(coordSplit);
+          var centerString = center.join(' ');
+          if (centerString != this.xtag.centerString) {
+            this.xtag.centerString = centerString;
+            this.xtag.centerObj = {
+              lat: Number(center[0]),
+              lng: Number(center[1])
+            };
+            if (this.xtag.ready) this.xtag.map.setCenter(this.xtag.centerObj);
+          }
         }
       },
       overlays: {
@@ -95,7 +97,7 @@
           }
         },
         get: function(){
-          return Number(this.getAttribute('zoom')) || 11;
+          return this.getAttribute('zoom') || 11;
         },
         set: function(num){
           if (node.xtag.ready) this.xtag.map.setZoom(num);
