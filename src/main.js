@@ -29,6 +29,10 @@
       center: node.center,
       disableDefaultUI: !node.defaultUI,
     });
+    map.addListener('idle', function(){
+      var center = map.getCenter();
+      node.center = center.lat() + ',' + center.lng();
+    });
     map._node = node;
     if (libraries.indexOf('places') > -1) {
       node.xtag.places = new maps.places.PlacesService(map);
@@ -73,13 +77,13 @@
           return this.xtag.centerObj;
         },
         set: function(val){
-          var center = val.split(coordSplit);
-          var centerString = center.join(' ');
+          var split = val.split(coordSplit);
+          var centerString = split.join();
           if (centerString != this.xtag.centerString) {
             this.xtag.centerString = centerString;
             this.xtag.centerObj = {
-              lat: Number(center[0]),
-              lng: Number(center[1])
+              lat: Number(split[0]),
+              lng: Number(split[1])
             };
             if (this.xtag.ready) this.xtag.map.setCenter(this.xtag.centerObj);
           }
@@ -190,5 +194,44 @@
     HTMLXGmapElement.ready = true;
     xtag.fireEvent(document, 'gmapsready');
   }
+
+})();
+
+(function(){
+
+  xtag.mixins.input = {
+    lifecycle: {
+      created: function(){
+        if (!this.xtag.input) this.xtag.input = this.querySelector('input');
+      }
+    },
+    methods: {
+      isValid: function(){
+        return this.xtag.validationRegex ? this.xtag.validationRegex.test(this.value) : true;
+      }
+    },
+    accessors: {
+      name: {
+        attribute: { property: 'input' }
+      },
+      disabled: {
+        attribute: { boolean: true, property: 'input' }
+      },
+      value: {
+        get: function(){
+          return this.xtag.input.value;
+        },
+        set: function(value){
+          this.xtag.input.value = value;
+        }
+      },
+      validate: {
+        attribute: {},
+        set: function(value){
+          this.xtag.validationRegex = new RegExp(value);
+        }
+      }
+    }
+  };
 
 })();
