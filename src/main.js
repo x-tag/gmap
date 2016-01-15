@@ -32,6 +32,7 @@
     map.addListener('idle', function(){
       var center = map.getCenter();
       node.center = center.lat() + ',' + center.lng();
+      xtag.fireEvent(node, 'boundschange');
     });
     map._node = node;
     if (libraries.indexOf('places') > -1) {
