@@ -19,6 +19,7 @@
 
   function initialize(node){
     node.xtag.overlays = {
+      internal: [],
       markers: [],
       polylines: [],
       infowindows: [],
@@ -92,16 +93,12 @@
         }
       },
       zoom: {
-        attribute: {
-          validate: function(coord){
-            return 1 * coord || 11;
-          }
-        },
+        attribute: {},
         get: function(){
-          return this.getAttribute('zoom') || 11;
+          return Number(this.getAttribute('zoom') || 11);
         },
         set: function(num){
-          if (this.xtag.ready) this.xtag.map.setZoom(num);
+          if (this.xtag.ready) this.xtag.map.setZoom(Number(num) || 11);
         }
       }
     },
@@ -173,16 +170,18 @@
     ['OverlayView', 'Marker', 'Polyline', 'InfoWindow'].forEach(function(klass){
       var type = klass.toLowerCase() + 's';
       var proto = maps[klass].prototype;
-      var name = proto.open ? 'open' : 'setMap';
-      var method = proto[name];
-      proto[name] = function(map){
-        if (map && map._node && !~map._node.xtag.overlays[type].indexOf(this)) {
-          if (this._node) removeOverlay(type, this);
-          this._node = map._node;
-          map._node.xtag.overlays[type].push(this);
+      var set = proto.set;
+      proto.set = function(key, value){
+        if (key == 'map'){
+          if (value && value._node) {
+            this._node = value._node;
+            value._node.xtag.overlays[type].push(this);
+          }
+          else if (!value && this._node) removeOverlay(type, this);
         }
-        else if (!map && this._node) removeOverlay(type, this);
-        return method.apply(this, arguments);
+        if (!(value && value._node && this.logAsInternal && value._node.blockInternal)){
+          set.apply(this, arguments);
+        }
       };
     });
     xtag.query(document, 'x-gmap').forEach(initialize);
